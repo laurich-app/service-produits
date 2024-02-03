@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  discovery:
+    image: consul:1.15
+    ports:
+      - 8500:8500
+
+  serveur-conf:
+    image: ghcr.io/laurich-app/serveur-conf:0.0.3
+    ports:
+      - 8888:8888
+
+  service-utilisateur:
+    image: ghcr.io/laurich-app/service-utilisateur:0.0.1
+    ports:
+      - 8081:8080
+    environment:
+      - URL_CONFIG_SERVEUR=http://serveur-conf:8888
+      - CONSUL_HOST=discovery
+      - CONSUL_PORT=8500
+      - PRIVATE_KEY=app_pkcs8.prv
+      - PUBLIC_KEY=app.pub
+    depends_on:
+      - serveur-conf
+      - discovery
+    restart: always
