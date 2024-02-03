@@ -8,7 +8,7 @@
         <version>3.2.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>org.catalogue</groupId>
+    <groupId>org.laurichapp</groupId>
     <artifactId>service-catalogue</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>service-catalogue</name>
