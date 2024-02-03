@@ -2,7 +2,6 @@ name: CI/CD build, test and publish image to github registry
 
 on:
   push:
-    branches: [ "main" ]
     tags: [ '*.*.*' ]
 
 env:
@@ -11,7 +10,7 @@ env:
 
 jobs:
   generate-image:
-    name: Push Serveur Conf
+    name: Push Service Catalogue
     runs-on: ubuntu-latest
     permissions:
       contents: read
