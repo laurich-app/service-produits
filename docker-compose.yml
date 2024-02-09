@@ -10,8 +10,17 @@ services:
     ports:
       - 8888:8888
 
+  postgres:
+    image: postgres:12.17
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=service-utilisateur
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pswd
+
   service-utilisateur:
-    image: ghcr.io/laurich-app/service-utilisateur:0.0.1
+    image: ghcr.io/laurich-app/service-utilisateur:1.1.0
     ports:
       - 8081:8080
     environment:
@@ -20,7 +29,9 @@ services:
       - CONSUL_PORT=8500
       - PRIVATE_KEY=app_pkcs8.prv
       - PUBLIC_KEY=app.pub
+      - POSTGRES_URL=jdbc:postgresql://postgres:5432/service-utilisateur
+      - POSTGRES_USER=user
+      - POSTGRES_PSWD=pswd
     depends_on:
       - serveur-conf
       - discovery
-    restart: always

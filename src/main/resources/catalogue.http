@@ -1,8 +1,9 @@
-POST http://localhost:8081/auth/login
+POST http://localhost:8081/auth/connexion
 Content-Type: application/json
 
 {
-
+  "email": "root@root.com",
+  "motDePasse": "root"
 }
 > {%
     client.test("Request executed successfully", function() {
@@ -19,3 +20,8 @@ GET http://localhost:8080/produits
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}

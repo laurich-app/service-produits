@@ -1,4 +1,4 @@
-package com.example.servicecatalogue.configurations;
+package com.example.servicecatalogue.properties;
 
 import com.example.servicecatalogue.dtos.ConsulDTO;
 import jakarta.annotation.PostConstruct;
