@@ -42,7 +42,8 @@ public class JwtProperties {
         String publicKeyPEM = decodedKeyString
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replaceAll(System.lineSeparator(), "")
-                .replace("-----END PUBLIC KEY-----", "");
+                .replace("-----END PUBLIC KEY-----", "")
+                .replace("\n", "");
 
         // Convertir la chaîne de caractères en un tableau de bytes (byte[])
         byte[] encoded = Base64.getDecoder().decode(publicKeyPEM);
