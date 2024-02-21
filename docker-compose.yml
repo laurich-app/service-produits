@@ -10,6 +10,12 @@ services:
     ports:
       - 8888:8888
 
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8082:8080
+
   postgres:
     image: postgres:12.17
     ports:

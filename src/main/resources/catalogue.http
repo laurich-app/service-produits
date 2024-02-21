@@ -16,9 +16,8 @@ Content-Type: application/json
 
 ####
 
-GET http://localhost:8080/produits
+GET http://localhost:8080/produits$
 Content-Type: application/json
-Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function() {
