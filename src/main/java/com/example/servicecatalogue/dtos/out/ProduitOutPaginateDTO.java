@@ -16,7 +16,7 @@ public record ProduitOutPaginateDTO(
         String image_url,
         Double prix_unitaire,
         Sexe sexe,
-        Taille taille,
-        List<Couleurs> couleurs
+        Taille taille
+
 ) {
 }

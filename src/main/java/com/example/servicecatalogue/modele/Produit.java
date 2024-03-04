@@ -34,20 +34,11 @@ public class Produit {
     private Taille taille;
 
     @Getter @Setter
-    @ElementCollection
-    @CollectionTable(name = "COULEURS")
-    @Enumerated(EnumType.STRING)
-    private List<Couleurs> couleurs;
-
-    @Getter @Setter
     private String libelle;
 
     @Getter @Setter
     @Column(length = 500)
     private String description;
-
-    @Getter @Setter
-    private int stock;
 
     @Getter @Setter
     @Column(length = 255)
@@ -65,8 +56,7 @@ public class Produit {
                 produit.getImage(),
                 produit.getPrix_unitaire(),
                 produit.getSexe(),
-                produit.getTaille(),
-                produit.getCouleurs()
+                produit.getTaille()
         );
     }
 }

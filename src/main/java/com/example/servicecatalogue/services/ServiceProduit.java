@@ -44,15 +44,15 @@ public class ServiceProduit {
         produit.setPrix_unitaire(produitDTO.getPrix_unitaire());
         produit.setSexe(Sexe.valueOf(produitDTO.getSexe()));
         produit.setTaille(Taille.valueOf(produitDTO.getTaille()));
-        produit.setCouleurs(
+       /* produit.setCouleurs(
                 produitDTO.getCouleurs()
                         .stream()
                         .map(Couleurs::valueOf)
                         .collect(Collectors.toList())
-        );
+        );*/
         produit.setLibelle(libelleMajuscules);
         produit.setDescription(produitDTO.getDescription());
-        produit.setStock(produitDTO.getStock());
+       // produit.setStock(produitDTO.getStock());
         produit.setImage(produitDTO.getImage());
         produit.setCategory(categorie);
         return produitRepository.save(produit);
@@ -103,7 +103,7 @@ public class ServiceProduit {
             throw new IllegalArgumentException("Produit not found");
         }
             Produit produit = opProduit.get();
-            // couleurs à voir plus tard
+
             produit.setPrix_unitaire(produitDTO.getPrix_unitaire());
             produit.setSexe(Sexe.valueOf(produitDTO.getSexe()));
             produit.setTaille(Taille.valueOf(produitDTO.getTaille()));
