@@ -5,10 +5,12 @@ import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.modele.Produit;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,20 +32,40 @@ public class ProduitsController {
         this.validator = validator;
     }
 
+    @PostMapping("/save")
+    public ResponseEntity<Produit> saveProduit(@RequestBody ProduitDTO produitDTO) {
+        try {
+            Produit savedProduit = serviceProduit.saveProduit(produitDTO);
+            return new ResponseEntity<>(savedProduit, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     /*
         Récupérer un produit par son id
      */
     @GetMapping("/{id}")
-    public Produit getProduitById(@PathVariable int id) {
-        return serviceProduit.getProduitById(id).orElse(null);
+    public ResponseEntity<Produit> getProduitById(@PathVariable int id){
+        try{
+            Produit produit = serviceProduit.getProduitById(id);
+            return new ResponseEntity<>(produit, HttpStatus.OK);
+        }catch (EntityNotFoundException e){
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
     }
 
     /*
         Supprimer un produit par son id
      */
     @DeleteMapping("/{id}")
-    public void deleteProduit(@PathVariable int id) {
-        serviceProduit.deleteProduit(id);
+    public ResponseEntity<String> deleteProduit(@PathVariable int id) {
+        try {
+            String res= serviceProduit.deleteProduit(id);
+            return new ResponseEntity<>(res,HttpStatus.NO_CONTENT);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     /*
@@ -69,14 +91,4 @@ public class ProduitsController {
         Paginate<ProduitOutPaginateDTO> utilisateur = this.serviceProduit.getAllProduits(paginateRequest);
         return ResponseEntity.ok(utilisateur);
     }
-
-    /*@PostMapping
-    public Produit saveOrUpdateProduit(@RequestBody Produit produit) {
-        return serviceProduit.saveOrUpdateProduit(produit);
-    }*/
-
-
-
-
-
 }

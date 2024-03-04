@@ -2,6 +2,8 @@ package com.example.servicecatalogue.properties;
 
 import com.example.servicecatalogue.dtos.ConsulDTO;
 import jakarta.annotation.PostConstruct;
+import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,7 @@ import java.util.Base64;
 public class JwtProperties {
 
     private RSAPublicKey key;
+
     private final WebClient webClient;
 
     @Value("${CONSUL_HOST:localhost}")

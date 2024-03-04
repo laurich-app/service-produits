@@ -5,12 +5,14 @@ import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.dtos.pagination.Pagination;
+import com.example.servicecatalogue.enums.Couleurs;
 import com.example.servicecatalogue.enums.Sexe;
 import com.example.servicecatalogue.enums.Taille;
 import com.example.servicecatalogue.modele.Categorie;
 import com.example.servicecatalogue.modele.Produit;
 import com.example.servicecatalogue.repositories.CategorieRepository;
 import com.example.servicecatalogue.utils.PageableUtils;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,31 @@ public class ServiceProduit {
     public ServiceProduit(@Autowired ProduitRepository produitRepository, CategorieRepository categorieRepository) {
         this.produitRepository = produitRepository;
         this.categorieRepository = categorieRepository;
+    }
+    public Produit saveProduit(ProduitDTO produitDTO){
+        if(produitDTO.getPrix_unitaire()<=0){
+            throw new IllegalArgumentException("Le prix unitaire doit être positif");
+        }
+        Categorie categorie = categorieRepository.findById(produitDTO.getId_categorie())
+                .orElseThrow(()-> new IllegalArgumentException("La catégorie spécifié n'existe pas"));
+        String libelleMajuscules = produitDTO.getLibelle().toUpperCase();
+        Produit produit = new Produit();
+        produit.setPrix_unitaire(produitDTO.getPrix_unitaire());
+        produit.setSexe(Sexe.valueOf(produitDTO.getSexe()));
+        produit.setTaille(Taille.valueOf(produitDTO.getTaille()));
+        produit.setCouleurs(
+                produitDTO.getCouleurs()
+                        .stream()
+                        .map(Couleurs::valueOf)
+                        .collect(Collectors.toList())
+        );
+        produit.setLibelle(libelleMajuscules);
+        produit.setDescription(produitDTO.getDescription());
+        produit.setStock(produitDTO.getStock());
+        produit.setImage(produitDTO.getImage());
+        produit.setCategory(categorie);
+        return produitRepository.save(produit);
+
     }
 
     /**
@@ -53,18 +80,22 @@ public class ServiceProduit {
         return paginate;
     };
 
-    public Optional<Produit> getProduitById(int id) {
-        return produitRepository.findById(id);
+    public Produit getProduitById(int id) {
+        Optional<Produit> produitOptional = produitRepository.findById(id);
+
+        if (produitOptional.isEmpty()) {
+            throw new EntityNotFoundException("Produit non trouvé pour l'ID :" +id);
+        }
+        return produitOptional.get();
     }
 
-    public Produit saveOrUpdateProduit(Produit produit) {
-        return produitRepository.save(produit);
-    }
-
-    public void deleteProduit(int id) {
+    public String deleteProduit(int id) {
+        if (!produitRepository.existsById(id)) {
+            throw new EntityNotFoundException("Produit non trouvé pour l'ID :" +id);
+        }
         produitRepository.deleteById(id);
+        return "Produit supprimé !";
     }
-
 
     public Produit updateProduit(int id ,ProduitDTO produitDTO) {
         Optional<Produit> opProduit = produitRepository.findById(id);

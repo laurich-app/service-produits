@@ -1,6 +1,5 @@
 package com.example.servicecatalogue.repositories;
 
-import com.example.servicecatalogue.dtos.out.CategorieOutPaginateDTO;
 import com.example.servicecatalogue.modele.Categorie;
 import com.example.servicecatalogue.modele.Produit;
 import jakarta.transaction.Transactional;
@@ -22,12 +21,6 @@ public interface ProduitRepository extends JpaRepository<Produit, Integer> {
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM Produit p WHERE p.category.id_categorie = :category")
-    public static CategorieOutPaginateDTO toDTO(Categorie categorie) {
-        return new CategorieOutPaginateDTO(
-                categorie.getId_categorie(),
-                categorie.getLibelle(),
-                categorie.getProduit()
-        );
-    }
+    @Query("DELETE FROM Produit p WHERE p.category = :category")
+    void deleteByCategory(Categorie category);
 }

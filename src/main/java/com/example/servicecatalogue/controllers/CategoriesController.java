@@ -1,10 +1,16 @@
 package com.example.servicecatalogue.controllers;
 
+import com.example.servicecatalogue.dtos.CategorieDTO;
+import com.example.servicecatalogue.dtos.out.CategorieOutPaginateDTO;
+import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.services.ServiceCategorie;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +19,7 @@ import java.util.Set;
 public class CategoriesController {
 
     @Autowired
-    private final ServiceCategorie serviceCategorie;
+    private ServiceCategorie serviceCategorie;
 
 
     private final Validator validator;
@@ -30,15 +36,6 @@ public class CategoriesController {
     public ResponseEntity<CategorieDTO> createCategory(@RequestBody CategorieDTO categorieDTO) {
         CategorieDTO createdCategorieDTO = serviceCategorie.createCategory(categorieDTO);
         return new ResponseEntity<>(createdCategorieDTO, HttpStatus.CREATED);
-    }
-
-    /*
-        Pour récupérer une catégrorie
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<CategorieDTO> getCategoryDetails(@PathVariable int id) {
-        CategorieDTO categorieDTO = serviceCategorie.getCategoryById(id);
-        return new ResponseEntity<>(categorieDTO, HttpStatus.OK);
     }
 
     /*
@@ -60,28 +57,42 @@ public class CategoriesController {
         return ResponseEntity.ok(utilisateur);
     }
 
+    /*
+        Pour récupérer une catégorie par id
+    */
+    @GetMapping("/{id}")
+    public ResponseEntity<CategorieDTO> getCategoryDetails(@PathVariable int id) {
+        try {
+            CategorieDTO categorieDTO = serviceCategorie.getCategoryById(id);
+            return new ResponseEntity<>(categorieDTO, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 
     /*
-        Pour modifier une catégorie
-    */
+        Pour modifier une une catégorie
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<CategorieDTO> updateCategory(
-            @PathVariable int id,
-            @RequestBody CategorieDTO categorieDTO) {
-        CategorieDTO updatedCategorieDTO = serviceCategorie.updateCategory(id, categorieDTO);
-        return new ResponseEntity<>(updatedCategorieDTO, HttpStatus.OK);
+    public ResponseEntity<CategorieDTO> updateCategory(@PathVariable int id, @RequestBody CategorieDTO categorieDTO) {
+        try {
+            CategorieDTO updatedCategoryDTO = serviceCategorie.updateCategory(id, categorieDTO);
+            return new ResponseEntity<>(updatedCategoryDTO, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     /*
         Pour supprimer une catégorie
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable int id) {
-        serviceCategorie.deleteCategory(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    public ResponseEntity<String> deleteCategory(@PathVariable int id) {
+        try {
+            serviceCategorie.deleteCategory(id);
+            return new ResponseEntity<>("Category with id " + id + " deleted successfully", HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>("Category not found with id: " + id, HttpStatus.NOT_FOUND);
+        }
     }
-}
-
-
-
 }
