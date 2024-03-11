@@ -44,4 +44,5 @@ Content-Type: application/json
 %}
 
 ####
-GET http://localhost:8080/ ici faut ajouter l'id de la categorie créé
+GET http://localhost:8080/1
+### ici faut ajouter l'id de la categorie créé

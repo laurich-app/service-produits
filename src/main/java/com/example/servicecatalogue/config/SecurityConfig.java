@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/produits").permitAll()
                         .requestMatchers(HttpMethod.GET, "/produits/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/categories/**").permitAll()
                         .anyRequest().authenticated())
                 .csrf((csrf) -> csrf.disable())
                 .cors((cors) -> cors.configurationSource(corsConfigurationSource()))

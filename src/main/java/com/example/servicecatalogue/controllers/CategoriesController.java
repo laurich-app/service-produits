@@ -33,7 +33,7 @@ public class CategoriesController {
     /*
         Pour créer une catégorie
      */
-    @PostMapping("save")
+    @PostMapping("/save")
     public ResponseEntity<CategorieDTO> createCategory(@RequestBody CategorieDTO categorieDTO) {
         CategorieDTO createdCategorieDTO = serviceCategorie.createCategory(categorieDTO);
         return new ResponseEntity<>(createdCategorieDTO, HttpStatus.CREATED);
