@@ -24,3 +24,24 @@ Content-Type: application/json
         client.assert(response.status === 200, "Response status is not 200");
     });
 %}
+
+####
+POST http://localhost:8080/categories/save
+Content-Type: application/json
+
+{
+    "libelle": "Nouvelle Catégorie"
+}
+
+####
+GET http://localhost:8080/categories
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+####
+GET http://localhost:8080/ ici faut ajouter l'id de la categorie créé

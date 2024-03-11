@@ -10,7 +10,9 @@ import com.example.servicecatalogue.enums.Sexe;
 import com.example.servicecatalogue.enums.Taille;
 import com.example.servicecatalogue.modele.Categorie;
 import com.example.servicecatalogue.modele.Produit;
+import com.example.servicecatalogue.modele.Stocks;
 import com.example.servicecatalogue.repositories.CategorieRepository;
+import com.example.servicecatalogue.repositories.StocksRepository;
 import com.example.servicecatalogue.utils.PageableUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,37 +28,57 @@ import java.util.stream.Collectors;
 @Service
 public class ServiceProduit {
 
+    @Autowired
     private final ProduitRepository produitRepository;
+    @Autowired
     private final CategorieRepository categorieRepository;
+    @Autowired
+    private final StocksRepository stockRepository;
 
-    public ServiceProduit(@Autowired ProduitRepository produitRepository, CategorieRepository categorieRepository) {
+    public ServiceProduit(ProduitRepository produitRepository, CategorieRepository categorieRepository, StocksRepository stockRepository) {
         this.produitRepository = produitRepository;
         this.categorieRepository = categorieRepository;
+        this.stockRepository = stockRepository;
     }
-    public Produit saveProduit(ProduitDTO produitDTO){
-        if(produitDTO.getPrix_unitaire()<=0){
+    public Produit saveProduit(ProduitDTO produitDTO) {
+        if (produitDTO.getPrix_unitaire() <= 0) {
             throw new IllegalArgumentException("Le prix unitaire doit être positif");
         }
         Categorie categorie = categorieRepository.findById(produitDTO.getId_categorie())
-                .orElseThrow(()-> new IllegalArgumentException("La catégorie spécifié n'existe pas"));
+                .orElseThrow(() -> new IllegalArgumentException("La catégorie spécifiée n'existe pas"));
+
+        if (produitDTO.getSexe() == null || produitDTO.getTaille() == null || produitDTO.getLibelle() == null) {
+            throw new IllegalArgumentException("Les champs 'sexe', 'taille' et 'libelle' ne doivent pas être nuls");
+        }
         String libelleMajuscules = produitDTO.getLibelle().toUpperCase();
+
         Produit produit = new Produit();
         produit.setPrix_unitaire(produitDTO.getPrix_unitaire());
         produit.setSexe(Sexe.valueOf(produitDTO.getSexe()));
         produit.setTaille(Taille.valueOf(produitDTO.getTaille()));
-       /* produit.setCouleurs(
-                produitDTO.getCouleurs()
-                        .stream()
-                        .map(Couleurs::valueOf)
-                        .collect(Collectors.toList())
-        );*/
         produit.setLibelle(libelleMajuscules);
         produit.setDescription(produitDTO.getDescription());
-       // produit.setStock(produitDTO.getStock());
         produit.setImage(produitDTO.getImage());
         produit.setCategory(categorie);
-        return produitRepository.save(produit);
 
+        produitRepository.save(produit);
+
+        if (produitDTO.getCouleurs() == null || produitDTO.getCouleurs().isEmpty()) {
+            throw new IllegalArgumentException("La liste des couleurs ne doit pas être nulle ou vide");
+        }
+
+        for (String couleur : produitDTO.getCouleurs()) {
+            if (couleur == null || Couleurs.valueOf(couleur) == null) {
+                throw new IllegalArgumentException("La couleur '" + couleur + "' n'est pas valide");
+            }
+            Stocks stock = new Stocks();
+            stock.setQuantite(produitDTO.getQuantite());
+            stock.getCouleurs().add(Couleurs.valueOf(couleur));
+            stock.setProduit(produit);
+            stockRepository.save(stock);
+        }
+
+        return produit;
     }
 
     /**

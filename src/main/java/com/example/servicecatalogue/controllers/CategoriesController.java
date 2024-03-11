@@ -15,7 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
-
+@RestController
+@RequestMapping("/categories")
 public class CategoriesController {
 
     @Autowired
@@ -32,7 +33,7 @@ public class CategoriesController {
     /*
         Pour créer une catégorie
      */
-    @PostMapping
+    @PostMapping("save")
     public ResponseEntity<CategorieDTO> createCategory(@RequestBody CategorieDTO categorieDTO) {
         CategorieDTO createdCategorieDTO = serviceCategorie.createCategory(categorieDTO);
         return new ResponseEntity<>(createdCategorieDTO, HttpStatus.CREATED);
@@ -71,7 +72,7 @@ public class CategoriesController {
     }
 
     /*
-        Pour modifier une une catégorie
+        Pour modifier une catégorie
      */
     @PutMapping("/{id}")
     public ResponseEntity<CategorieDTO> updateCategory(@PathVariable int id, @RequestBody CategorieDTO categorieDTO) {

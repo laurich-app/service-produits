@@ -32,6 +32,9 @@ import java.util.stream.Collectors;
 
 
         public CategorieDTO createCategory(CategorieDTO categorieDTO) {
+            if (categorieDTO.getLibelle() == null || categorieDTO.getLibelle().isEmpty()) {
+                throw new IllegalArgumentException("Le champ 'libelle' ne doit pas être nul ou vide");
+            }
             Categorie newCategory = new Categorie();
             newCategory.setLibelle(categorieDTO.getLibelle());
             Categorie savedCategory = categorieRepository.save(newCategory);
@@ -76,7 +79,6 @@ import java.util.stream.Collectors;
                 throw new EntityNotFoundException("Category not found with id: " + id);
             }
         }
-
         public void deleteCategory(int id) {
             Optional<Categorie> categorieOptional = categorieRepository.findById(id);
             if (categorieOptional.isPresent()) {

@@ -22,6 +22,7 @@ public class ProduitDTO {
     private String sexe;
     private String taille;
     private int categorie;
+    private int quantite;
 
 
 }
