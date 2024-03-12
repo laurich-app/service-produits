@@ -46,6 +46,8 @@ public class ProduitsController {
             return new ResponseEntity<>(ProduitOutDTO.fromProduit(savedProduit), HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
     }
 

@@ -8,7 +8,7 @@ import com.example.servicecatalogue.modele.Stocks;
 import java.util.ArrayList;
 import java.util.List;
 
-public record ProduitOutDTO(List<StocksOutDTO> stock, int id, double prix_unitaire, Sexe sexe, Taille taille, String image_url, String description, String libelle) {
+public record ProduitOutDTO(List<StocksOutDTO> stock, int id, double prix_unitaire, Sexe sexe, Taille taille, String image_url, String description, String libelle, CategorieOutDTO categorie) {
 
     public static ProduitOutDTO fromProduit(Produit produit) {
         List<StocksOutDTO> stocks = new ArrayList<>();
@@ -25,7 +25,8 @@ public record ProduitOutDTO(List<StocksOutDTO> stock, int id, double prix_unitai
                 produit.getTaille(),
                 produit.getImage(),
                 produit.getDescription(),
-                produit.getLibelle()
+                produit.getLibelle(),
+                new CategorieOutDTO(produit.getCategory().getId_categorie(), produit.getCategory().getLibelle())
         );
     }
 }
