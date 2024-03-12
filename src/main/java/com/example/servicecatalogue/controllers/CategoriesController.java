@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
@@ -34,6 +35,7 @@ public class CategoriesController {
         Pour créer une catégorie
      */
     @PostMapping()
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
     public ResponseEntity<CategorieDTO> createCategory(@RequestBody CategorieDTO categorieDTO) {
         CategorieDTO createdCategorieDTO = serviceCategorie.createCategory(categorieDTO);
         return new ResponseEntity<>(createdCategorieDTO, HttpStatus.CREATED);
@@ -75,6 +77,7 @@ public class CategoriesController {
         Pour modifier une catégorie
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
     public ResponseEntity<CategorieDTO> updateCategory(@PathVariable int id, @RequestBody CategorieDTO categorieDTO) {
         try {
             CategorieDTO updatedCategoryDTO = serviceCategorie.updateCategory(id, categorieDTO);
@@ -88,10 +91,11 @@ public class CategoriesController {
         Pour supprimer une catégorie
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
     public ResponseEntity<String> deleteCategory(@PathVariable int id) {
         try {
             serviceCategorie.deleteCategory(id);
-            return new ResponseEntity<>("Category with id " + id + " deleted successfully", HttpStatus.OK);
+            return new ResponseEntity<>("Category with id " + id + " deleted successfully", HttpStatus.NO_CONTENT);
         } catch (EntityNotFoundException e) {
             return new ResponseEntity<>("Category not found with id: " + id, HttpStatus.NOT_FOUND);
         }

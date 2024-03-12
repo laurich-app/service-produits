@@ -16,13 +16,8 @@ public class ProduitDTO {
     private String libelle;
     private String description;
     private double prix_unitaire;
-    private int stock;
-    private String image;
-    private int id_categorie;
+    private String image_url;
+    private int categorie_id;
     private String sexe;
     private String taille;
-    private int categorie;
-    private int quantite;
-
-
 }

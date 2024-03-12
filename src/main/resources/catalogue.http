@@ -16,24 +16,6 @@ Content-Type: application/json
 
 ####
 
-GET http://localhost:8080/produits$
-Content-Type: application/json
-
-> {%
-    client.test("Request executed successfully", function() {
-        client.assert(response.status === 200, "Response status is not 200");
-    });
-%}
-
-####
-POST http://localhost:8080/categories/save
-Content-Type: application/json
-
-{
-    "libelle": "Nouvelle Catégorie"
-}
-
-####
 GET http://localhost:8080/categories
 Content-Type: application/json
 
@@ -44,5 +26,241 @@ Content-Type: application/json
 %}
 
 ####
-GET http://localhost:8080/1
-### ici faut ajouter l'id de la categorie créé
+
+POST http://localhost:8080/categories
+Content-Type: application/json
+
+{
+
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 401, "Response status is not 401");
+    });
+%}
+
+####
+
+POST http://localhost:8080/categories
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "libelle": "Chaussure"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+        client.global.set("categorie_id", response.body.id);
+    });
+%}
+
+###
+GET http://localhost:8080/categories/{{categorie_id}}
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+####
+
+PUT http://localhost:8080/categories/{{categorie_id}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "libelle": "T Shirt"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.libelle == "T Shirt", "Les données n'ont pas été modifié")
+    });
+%}
+
+####
+
+DELETE http://localhost:8080/categories/{{categorie_id}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 204, "Response status is not 204");
+    });
+%}
+
+####
+
+GET http://localhost:8080/produits
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+####
+
+POST http://localhost:8080/categories
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "libelle": "Chaussure"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+        client.global.set("categorie_id", response.body.id);
+    });
+%}
+
+####
+
+POST http://localhost:8080/produits
+Content-Type: application/json
+
+{
+
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 401, "Response status is not 401");
+    });
+%}
+
+####
+
+POST http://localhost:8080/produits
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "prix_unitaire": 12,
+  "sexe": "HOMME",
+  "taille": "S",
+  "image_url": "https://image_url",
+  "description": "Ma description",
+  "libelle": "Mon libelle",
+  "couleurs": ["ROUGE", "VERT"],
+  "categorie_id": {{categorie_id}}
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+        client.global.set("produit_id", response.body.id);
+    });
+%}
+
+###
+
+PUT http://localhost:8080/produits/{{produit_id}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "prix_unitaire": 19
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.prix_unitaire == 19, "Le produit n'a pas été modifié")
+    });
+%}
+
+###
+
+DELETE http://localhost:8080/produits/{{produit_id}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 204, "Response status is not 204");
+    });
+%}
+
+####
+
+POST http://localhost:8080/produits
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "prix_unitaire": 12,
+  "sexe": "HOMME",
+  "taille": "S",
+  "image_url": "https://image_url",
+  "description": "Ma description",
+  "libelle": "Mon libelle",
+  "couleurs": ["ROUGE", "VERT"],
+  "categorie_id": {{categorie_id}}
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+        client.global.set("produit_id", response.body.id);
+    });
+%}
+
+###
+
+GET http://localhost:8080/produits/{{produit_id}}
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+####
+
+GET http://localhost:8080/produits
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+###
+
+POST http://localhost:8080/produits/{{produit_id}}/couleurs
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "couleur":"BLEU"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+%}
+
+###
+
+DELETE http://localhost:8080/produits/{{produit_id}}/couleurs/BLEU
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 204, "Response status is not 204");
+    });
+%}

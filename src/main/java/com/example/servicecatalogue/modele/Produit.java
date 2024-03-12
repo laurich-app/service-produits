@@ -2,6 +2,7 @@ package com.example.servicecatalogue.modele;
 
 
 import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
+import com.example.servicecatalogue.dtos.out.StocksOutDTO;
 import com.example.servicecatalogue.enums.Couleurs;
 import com.example.servicecatalogue.enums.Sexe;
 import com.example.servicecatalogue.enums.Taille;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "PRODUIT")
@@ -48,8 +50,8 @@ public class Produit {
     @ManyToOne
     private Categorie category;
 
-    @Setter
-    @OneToMany(mappedBy = "produit")
+    @Getter @Setter
+    @OneToMany(mappedBy = "produit", cascade = CascadeType.REMOVE)
     private List<Stocks> stocks;
 
     public static ProduitOutPaginateDTO toDTO(Produit produit) {
@@ -60,7 +62,8 @@ public class Produit {
                 produit.getImage(),
                 produit.getPrix_unitaire(),
                 produit.getSexe(),
-                produit.getTaille()
+                produit.getTaille(),
+                produit.getStocks().stream().map(StocksOutDTO::fromStock).collect(Collectors.toList())
         );
     }
 }

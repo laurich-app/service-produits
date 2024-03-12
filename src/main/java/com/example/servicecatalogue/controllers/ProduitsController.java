@@ -1,10 +1,17 @@
 package com.example.servicecatalogue.controllers;
 
 import com.example.servicecatalogue.dtos.ProduitDTO;
+import com.example.servicecatalogue.dtos.ProduitUpdateDTO;
+import com.example.servicecatalogue.dtos.StockDTO;
+import com.example.servicecatalogue.dtos.out.ProduitOutDTO;
 import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
+import com.example.servicecatalogue.dtos.out.StocksOutDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
+import com.example.servicecatalogue.enums.Couleurs;
+import com.example.servicecatalogue.exceptions.StockExisteDejaException;
 import com.example.servicecatalogue.modele.Produit;
+import com.example.servicecatalogue.modele.Stocks;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -32,10 +39,11 @@ public class ProduitsController {
     }
 
     @PostMapping()
-    public ResponseEntity<Produit> saveProduit(@RequestBody ProduitDTO produitDTO) {
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
+    public ResponseEntity<ProduitOutDTO> saveProduit(@RequestBody ProduitDTO produitDTO) {
         try {
             Produit savedProduit = serviceProduit.saveProduit(produitDTO);
-            return new ResponseEntity<>(savedProduit, HttpStatus.CREATED);
+            return new ResponseEntity<>(ProduitOutDTO.fromProduit(savedProduit), HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
@@ -45,10 +53,10 @@ public class ProduitsController {
         Récupérer un produit par son id
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Produit> getProduitById(@PathVariable int id){
+    public ResponseEntity<ProduitOutDTO> getProduitById(@PathVariable int id){
         try{
             Produit produit = serviceProduit.getProduitById(id);
-            return new ResponseEntity<>(produit, HttpStatus.OK);
+            return new ResponseEntity<>(ProduitOutDTO.fromProduit(produit), HttpStatus.OK);
         }catch (EntityNotFoundException e){
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
@@ -58,6 +66,7 @@ public class ProduitsController {
         Supprimer un produit par son id
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
     public ResponseEntity<String> deleteProduit(@PathVariable int id) {
         try {
             String res= serviceProduit.deleteProduit(id);
@@ -71,8 +80,13 @@ public class ProduitsController {
        Modifier un produit
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Produit> updateProduit(@PathVariable int id, @RequestBody ProduitDTO produitDTO) {
-        return ResponseEntity.ok(serviceProduit.updateProduit(id,produitDTO));
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
+    public ResponseEntity<ProduitOutDTO> updateProduit(@PathVariable int id, @RequestBody ProduitUpdateDTO produitDTO) {
+        try {
+            return ResponseEntity.ok(ProduitOutDTO.fromProduit(serviceProduit.updateProduit(id,produitDTO)));
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping
@@ -89,5 +103,32 @@ public class ProduitsController {
         }
         Paginate<ProduitOutPaginateDTO> utilisateur = this.serviceProduit.getAllProduits(paginateRequest);
         return ResponseEntity.ok(utilisateur);
+    }
+
+    /*
+        Supprimer un stock par son id produit et sa couleur
+     */
+    @DeleteMapping("/{id}/couleurs/{couleur}")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
+    public ResponseEntity<String> deleteStock(@PathVariable int id, @PathVariable Couleurs couleur) {
+        try {
+            serviceProduit.deleteStock(id, couleur);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/{id}/couleurs")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")
+    public ResponseEntity<StocksOutDTO> addStock(@PathVariable int id, @RequestBody StockDTO stockDTO) {
+        try {
+            Stocks s = serviceProduit.addStock(id, stockDTO.couleur());
+            return new ResponseEntity<>(StocksOutDTO.fromStock(s), HttpStatus.CREATED);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (StockExisteDejaException e) {
+            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+        }
     }
 }

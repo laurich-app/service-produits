@@ -27,10 +27,7 @@ public class Stocks {
 
     @Getter
     @Setter
-    @ElementCollection
-    @CollectionTable(name = "COULEURS")
-    @Enumerated(EnumType.STRING)
-    private List<Couleurs> couleurs;
+    private Couleurs couleurs;
 
     @Getter @Setter
     private int quantite;
