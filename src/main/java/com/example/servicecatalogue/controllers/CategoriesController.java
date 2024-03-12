@@ -1,7 +1,6 @@
 package com.example.servicecatalogue.controllers;
 
 import com.example.servicecatalogue.dtos.CategorieDTO;
-import com.example.servicecatalogue.dtos.out.CategorieOutPaginateDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.services.ServiceCategorie;
@@ -45,7 +44,7 @@ public class CategoriesController {
         Pour récuperer la liste des categories paginées
      */
     @GetMapping()
-    public ResponseEntity<Paginate<CategorieOutPaginateDTO>> getAllCategories(
+    public ResponseEntity<Paginate<CategorieDTO>> getAllCategories(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
             @RequestParam(name = "limit", defaultValue = "10", required = false) int limit,
             @RequestParam(name = "sort", required = false) String sort,
@@ -56,7 +55,7 @@ public class CategoriesController {
         if(!violations.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        Paginate<CategorieOutPaginateDTO> utilisateur = this.serviceCategorie.getAllCategories(paginateRequest);
+        Paginate<CategorieDTO> utilisateur = this.serviceCategorie.getAllCategories(paginateRequest);
         return ResponseEntity.ok(utilisateur);
     }
 

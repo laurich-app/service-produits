@@ -1,7 +1,7 @@
 package com.example.servicecatalogue.modele;
 
 
-import com.example.servicecatalogue.dtos.out.CategorieOutPaginateDTO;
+import com.example.servicecatalogue.dtos.CategorieDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,11 +38,11 @@ public class Categorie {
                 '}';
     }
 
-    public static CategorieOutPaginateDTO toDTO(Categorie categorie) {
-        return new CategorieOutPaginateDTO(
+    public static CategorieDTO toDTO(Categorie categorie, int nb_produits) {
+        return new CategorieDTO(
                 categorie.getId_categorie(),
                 categorie.getLibelle(),
-                categorie.getProduit()
+                nb_produits
         );
     }
 }

@@ -1,7 +1,6 @@
 package com.example.servicecatalogue.services;
 
 import com.example.servicecatalogue.dtos.CategorieDTO;
-import com.example.servicecatalogue.dtos.out.CategorieOutPaginateDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.dtos.pagination.Pagination;
@@ -55,13 +54,16 @@ import java.util.stream.Collectors;
             }
         }
 
-        public Paginate<CategorieOutPaginateDTO> getAllCategories(PaginateRequestDTO paginateRequestDTO){
+        public Paginate<CategorieDTO> getAllCategories(PaginateRequestDTO paginateRequestDTO){
             Pageable pageable = PageableUtils.convert(paginateRequestDTO);
             Page<Categorie> paginated = this.categorieRepository.findAll(pageable);
-            List<CategorieOutPaginateDTO> dtos = paginated.stream()
-                    .map(Categorie::toDTO)
+            List<CategorieDTO> dtos = paginated.stream()
+                    .map((e) -> {
+                        int nbProduits = produitRepository.countByCategory(e);
+                        return Categorie.toDTO(e, nbProduits);
+                    })
                     .collect(Collectors.toList());
-            Paginate<CategorieOutPaginateDTO> paginate = new Paginate<>(dtos, new Pagination(Math.toIntExact(paginated.getTotalElements()),
+            Paginate<CategorieDTO> paginate = new Paginate<>(dtos, new Pagination(Math.toIntExact(paginated.getTotalElements()),
                     paginateRequestDTO.limit(), paginateRequestDTO.page()));
             return paginate;
         };
