@@ -22,8 +22,8 @@ public class Stocks {
 
     @Getter @Setter
     @ManyToOne
-    @JoinColumn(name = "id_produit", referencedColumnName = "id_produit")
-    private Produit id_produit;
+    @JoinColumn(name = "id_produit")
+    private Produit produit;
 
     @Getter
     @Setter

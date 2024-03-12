@@ -33,7 +33,7 @@ public class CategoriesController {
     /*
         Pour créer une catégorie
      */
-    @PostMapping("/save")
+    @PostMapping()
     public ResponseEntity<CategorieDTO> createCategory(@RequestBody CategorieDTO categorieDTO) {
         CategorieDTO createdCategorieDTO = serviceCategorie.createCategory(categorieDTO);
         return new ResponseEntity<>(createdCategorieDTO, HttpStatus.CREATED);
@@ -42,7 +42,7 @@ public class CategoriesController {
     /*
         Pour récuperer la liste des categories paginées
      */
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<Paginate<CategorieOutPaginateDTO>> getAllCategories(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
             @RequestParam(name = "limit", defaultValue = "10", required = false) int limit,

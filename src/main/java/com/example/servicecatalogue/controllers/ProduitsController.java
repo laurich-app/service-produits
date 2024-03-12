@@ -31,7 +31,7 @@ public class ProduitsController {
         this.validator = validator;
     }
 
-    @PostMapping("/save")
+    @PostMapping()
     public ResponseEntity<Produit> saveProduit(@RequestBody ProduitDTO produitDTO) {
         try {
             Produit savedProduit = serviceProduit.saveProduit(produitDTO);
@@ -70,7 +70,7 @@ public class ProduitsController {
     /*
        Modifier un produit
      */
-    @PutMapping("/produit/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Produit> updateProduit(@PathVariable int id, @RequestBody ProduitDTO produitDTO) {
         return ResponseEntity.ok(serviceProduit.updateProduit(id,produitDTO));
     }

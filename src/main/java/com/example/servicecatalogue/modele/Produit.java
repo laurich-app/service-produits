@@ -48,6 +48,10 @@ public class Produit {
     @ManyToOne
     private Categorie category;
 
+    @Setter
+    @OneToMany(mappedBy = "produit")
+    private List<Stocks> stocks;
+
     public static ProduitOutPaginateDTO toDTO(Produit produit) {
         return new ProduitOutPaginateDTO(
                 produit.getId(),
