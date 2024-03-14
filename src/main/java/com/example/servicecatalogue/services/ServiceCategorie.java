@@ -4,7 +4,10 @@ import com.example.servicecatalogue.dtos.CategorieDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.dtos.pagination.Pagination;
+import com.example.servicecatalogue.dtos.rabbits.GenererCommandeDTO;
+import com.example.servicecatalogue.dtos.rabbits.SupprimerStockDTO;
 import com.example.servicecatalogue.modele.Categorie;
+import com.example.servicecatalogue.modele.Produit;
 import com.example.servicecatalogue.repositories.CategorieRepository;
 import com.example.servicecatalogue.repositories.ProduitRepository;
 import com.example.servicecatalogue.utils.PageableUtils;
@@ -29,6 +32,11 @@ import java.util.stream.Collectors;
         @Autowired
         private ProduitRepository produitRepository;
 
+        private final ServiceRabbitMQSender serviceRabbitMQSender;
+
+        public ServiceCategorie(@Autowired ServiceRabbitMQSender serviceRabbitMQSender) {
+            this.serviceRabbitMQSender = serviceRabbitMQSender;
+        }
 
         public CategorieDTO createCategory(CategorieDTO categorieDTO) {
             if (categorieDTO.getLibelle() == null || categorieDTO.getLibelle().isEmpty()) {
@@ -85,7 +93,12 @@ import java.util.stream.Collectors;
             Optional<Categorie> categorieOptional = categorieRepository.findById(id);
             if (categorieOptional.isPresent()) {
                 Categorie category = categorieOptional.get();
-                produitRepository.deleteByCategory(category);
+                category.getProduit().forEach(p -> {
+                    p.getStocks().forEach(s -> {
+                        this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(s.getCouleurs().name(), p.getId()));
+                    });
+                    produitRepository.delete(p);
+                });
                 categorieRepository.delete(category);
             } else {
                 throw new EntityNotFoundException("Category not found with id: " + id);

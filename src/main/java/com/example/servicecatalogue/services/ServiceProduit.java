@@ -6,9 +6,12 @@ import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.dtos.pagination.Pagination;
+import com.example.servicecatalogue.dtos.rabbits.*;
 import com.example.servicecatalogue.enums.Couleurs;
 import com.example.servicecatalogue.enums.Sexe;
 import com.example.servicecatalogue.enums.Taille;
+import com.example.servicecatalogue.exceptions.InvalideCommandeException;
+import com.example.servicecatalogue.exceptions.QuantiteIndisponibleCommandeException;
 import com.example.servicecatalogue.exceptions.StockExisteDejaException;
 import com.example.servicecatalogue.modele.Categorie;
 import com.example.servicecatalogue.modele.Produit;
@@ -18,6 +21,8 @@ import com.example.servicecatalogue.repositories.StocksRepository;
 import com.example.servicecatalogue.utils.PageableUtils;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +36,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ServiceProduit {
+    private static final Logger logger = LoggerFactory.getLogger(ServiceProduit.class);
 
     @Autowired
     private final ProduitRepository produitRepository;
@@ -39,10 +45,13 @@ public class ServiceProduit {
     @Autowired
     private final StocksRepository stockRepository;
 
-    public ServiceProduit(ProduitRepository produitRepository, CategorieRepository categorieRepository, StocksRepository stockRepository) {
+    private final ServiceRabbitMQSender serviceRabbitMQSender;
+
+    public ServiceProduit(ProduitRepository produitRepository, CategorieRepository categorieRepository, StocksRepository stockRepository, @Autowired ServiceRabbitMQSender serviceRabbitMQSender) {
         this.produitRepository = produitRepository;
         this.categorieRepository = categorieRepository;
         this.stockRepository = stockRepository;
+        this.serviceRabbitMQSender = serviceRabbitMQSender;
     }
 
     @Transactional
@@ -122,10 +131,15 @@ public class ServiceProduit {
 
     @Transactional
     public String deleteProduit(int id) {
-        if (!produitRepository.existsById(id)) {
+        Optional<Produit> produit = this.produitRepository.findById(id);
+        if (produit.isEmpty()) {
             throw new EntityNotFoundException("Produit non trouvé pour l'ID :" +id);
         }
         produitRepository.deleteById(id);
+        produit.get().getStocks().stream().forEach(s -> {
+            this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(s.getCouleurs().name(), id));
+        });
+
         return "Produit supprimé !";
     }
 
@@ -184,12 +198,50 @@ public class ServiceProduit {
         return stockRepository.save(s);
     }
 
+    @Transactional
     public void deleteStock(int id, Couleurs couleur) {
         Stocks stock = stockRepository.findByProduitIdAndCouleurs(id, couleur);
         if(stock == null) {
             throw new EntityNotFoundException("Le stock existe déjà");
         }
-
         stockRepository.delete(stock);
+        this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(couleur.name(), stock.getProduit().getId()));
+    }
+
+    /**
+     * A la réception d'une commande valider, envoie le détail des produits au service catalogue pour traitement.
+     * Met à jours le stock en conséquence.
+     * @param validerCommandeDTO
+     */
+    @Transactional
+    public void genereCommande(ValiderCommandeDTO validerCommandeDTO) throws InvalideCommandeException, QuantiteIndisponibleCommandeException {
+        List<ProduitCatalogueDTO> produits = new ArrayList<>();
+        for (ProduitCommandeDTO p : validerCommandeDTO.produits()) {
+            Optional<Produit> opt = this.produitRepository.findById(p.id_produit());
+            if (opt.isEmpty())
+                throw new InvalideCommandeException("Le produit " + p.id_produit() + "n'existe plus dans la base." + validerCommandeDTO);
+
+            Produit produit = opt.get();
+            Stocks stock = null;
+            for (Stocks s : produit.getStocks()) {
+                if (s.getCouleurs().equals(Couleurs.valueOf(p.couleur())))
+                    stock = s;
+            }
+            if(stock == null)
+                throw new QuantiteIndisponibleCommandeException("La couleur n'est plus disponible : "+p.couleur());
+
+            if(stock.getQuantite() < p.quantite())
+                throw new QuantiteIndisponibleCommandeException("La quantité est indisponible : "+p.couleur() + "; "+p.id_produit());
+
+            // Mise à jour du stock
+            stock.setQuantite(stock.getQuantite() - p.quantite());
+            produits.add(Produit.toRabbitMqDTO(produit, p.couleur(), p.quantite()));
+        }
+        this.serviceRabbitMQSender.genererCommande(
+                new GenererCommandeDTO(
+                        produits,
+                        validerCommandeDTO.id_commande()
+                )
+        );
     }
 }

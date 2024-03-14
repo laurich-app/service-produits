@@ -3,6 +3,8 @@ package com.example.servicecatalogue.modele;
 
 import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
 import com.example.servicecatalogue.dtos.out.StocksOutDTO;
+import com.example.servicecatalogue.dtos.rabbits.CategorieCatalogueDTO;
+import com.example.servicecatalogue.dtos.rabbits.ProduitCatalogueDTO;
 import com.example.servicecatalogue.enums.Couleurs;
 import com.example.servicecatalogue.enums.Sexe;
 import com.example.servicecatalogue.enums.Taille;
@@ -64,6 +66,28 @@ public class Produit {
                 produit.getSexe(),
                 produit.getTaille(),
                 produit.getStocks().stream().map(StocksOutDTO::fromStock).collect(Collectors.toList())
+        );
+    }
+
+    /**
+     * Ligne 4 : génère les infos à envoyer à la commande
+     * @param produit
+     * @param couleur
+     * @param quantite
+     * @return
+     */
+    public static ProduitCatalogueDTO toRabbitMqDTO(Produit produit, String couleur, int quantite) {
+        return new ProduitCatalogueDTO(
+                produit.getId(),
+                produit.getPrix_unitaire(),
+                produit.getSexe().toString(),
+                produit.getTaille().toString(),
+                produit.getImage(),
+                couleur,
+                quantite,
+                produit.getLibelle(),
+                produit.getDescription(),
+                new CategorieCatalogueDTO(produit.getCategory().getLibelle())
         );
     }
 }
