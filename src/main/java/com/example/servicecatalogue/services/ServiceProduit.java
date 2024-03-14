@@ -13,6 +13,7 @@ import com.example.servicecatalogue.enums.Taille;
 import com.example.servicecatalogue.exceptions.InvalideCommandeException;
 import com.example.servicecatalogue.exceptions.QuantiteIndisponibleCommandeException;
 import com.example.servicecatalogue.exceptions.StockExisteDejaException;
+import com.example.servicecatalogue.exceptions.StockNotFoundException;
 import com.example.servicecatalogue.modele.Categorie;
 import com.example.servicecatalogue.modele.Produit;
 import com.example.servicecatalogue.modele.Stocks;
@@ -94,6 +95,8 @@ public class ServiceProduit {
             stockRepository.save(stock);
             stocks.add(stock);
         }
+
+        stocks.forEach(s -> this.serviceRabbitMQSender.stockManquant(Produit.toRabbitMqDTO(produit, s.getCouleurs().toString(), 5)));
 
         produit.setStocks(stocks);
         return produit;
@@ -195,7 +198,9 @@ public class ServiceProduit {
         s.setQuantite(0);
         s.setProduit(produit);
         s.setCouleurs(couleur);
-        return stockRepository.save(s);
+        s = stockRepository.save(s);
+        this.serviceRabbitMQSender.stockManquant(Produit.toRabbitMqDTO(produit, s.getCouleurs().toString(), 5));
+        return s;
     }
 
     @Transactional
@@ -216,6 +221,8 @@ public class ServiceProduit {
     @Transactional
     public void genereCommande(ValiderCommandeDTO validerCommandeDTO) throws InvalideCommandeException, QuantiteIndisponibleCommandeException {
         List<ProduitCatalogueDTO> produits = new ArrayList<>();
+        // Liste des produits qui ont un stock inférieur ou égale à 5 : besoin d'être réapprovisionner
+        List<ProduitCatalogueDTO> produitsStockManquant = new ArrayList<>();
         for (ProduitCommandeDTO p : validerCommandeDTO.produits()) {
             Optional<Produit> opt = this.produitRepository.findById(p.id_produit());
             if (opt.isEmpty())
@@ -236,6 +243,8 @@ public class ServiceProduit {
             // Mise à jour du stock
             stock.setQuantite(stock.getQuantite() - p.quantite());
             produits.add(Produit.toRabbitMqDTO(produit, p.couleur(), p.quantite()));
+            if(stock.getQuantite() <= 5)
+                produitsStockManquant.add(Produit.toRabbitMqDTO(produit, p.couleur(), p.quantite()));
         }
         this.serviceRabbitMQSender.genererCommande(
                 new GenererCommandeDTO(
@@ -243,5 +252,15 @@ public class ServiceProduit {
                         validerCommandeDTO.id_commande()
                 )
         );
+        produitsStockManquant.stream().forEach(p -> this.serviceRabbitMQSender.stockManquant(p));
+    }
+
+    @Transactional
+    public void stockReappro(ProduitCommandeDTO produitCommandeDTO) throws StockNotFoundException {
+        Stocks stock = this.stockRepository.findByProduitIdAndCouleurs(produitCommandeDTO.id_produit(), Couleurs.valueOf(produitCommandeDTO.couleur()));
+        if(stock == null)
+            throw new StockNotFoundException("Le stock n'existe pas.");
+        stock.setQuantite(produitCommandeDTO.quantite());
+        this.stockRepository.save(stock);
     }
 }
