@@ -1,6 +1,6 @@
 package com.example.servicecatalogue.exceptions;
 
-public class StockExisteDejaException extends Throwable {
+public class StockExisteDejaException extends Exception {
     public StockExisteDejaException() {
     }
 

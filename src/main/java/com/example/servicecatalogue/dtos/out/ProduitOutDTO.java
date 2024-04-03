@@ -20,13 +20,13 @@ public record ProduitOutDTO(List<StocksOutDTO> stock, int id, double prix_unitai
         return new ProduitOutDTO(
                 stocks,
                 produit.getId(),
-                produit.getPrix_unitaire(),
+                produit.getPrixUnitaire(),
                 produit.getSexe(),
                 produit.getTaille(),
                 produit.getImage(),
                 produit.getDescription(),
                 produit.getLibelle(),
-                new CategorieOutDTO(produit.getCategory().getId_categorie(), produit.getCategory().getLibelle())
+                new CategorieOutDTO(produit.getCategory().getIdCategorie(), produit.getCategory().getLibelle())
         );
     }
 }

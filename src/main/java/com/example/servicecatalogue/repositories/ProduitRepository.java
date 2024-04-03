@@ -13,7 +13,7 @@ import java.util.List;
 
 @Repository
 public interface ProduitRepository extends JpaRepository<Produit, Integer> {
-    @Query("SELECT p FROM Produit p WHERE p.category.id_categorie = ?1")
+    @Query("SELECT p FROM Produit p WHERE p.category.idCategorie = ?1")
     List<Produit> findByCategory(Integer category);
 
     @Query("SELECT COUNT(p) FROM Produit p WHERE p.category = :category")
