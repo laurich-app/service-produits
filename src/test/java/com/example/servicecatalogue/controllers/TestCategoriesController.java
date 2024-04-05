@@ -1,7 +1,9 @@
 package com.example.servicecatalogue.controllers;
 
 import com.example.servicecatalogue.dtos.CategorieDTO;
+import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
+import com.example.servicecatalogue.dtos.pagination.Pagination;
 import com.example.servicecatalogue.exceptions.CategorieNotFoundException;
 import com.example.servicecatalogue.services.ServiceCategorie;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,8 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -114,9 +115,9 @@ class TestCategoriesController extends TestConfigurationControlleurRest {
     @Test
     void testGetAllCategoriesOk(@Autowired MockMvc mvc) throws Exception {
         // BEFORE
-        Set<ConstraintViolation<PaginateRequestDTO>> violations = new HashSet<>();
-        PaginateRequestDTO paginateRequest = new PaginateRequestDTO(0,10, null, Sort.Direction.ASC);
-        doReturn(violations).when(validator).validate(paginateRequest);
+        Paginate<CategorieDTO> p = new Paginate<>(List.of(), new Pagination(0, 10, 0));
+
+        doReturn(p).when(serviceCategorie).getAllCategories(any());
 
         // WHERE
         MockHttpServletResponse response = mvc.perform(
@@ -130,18 +131,18 @@ class TestCategoriesController extends TestConfigurationControlleurRest {
     }
 
     /**
-     * Si contrainte violation ok
+     * Si violation : bad request
      * @param mvc
      * @throws Exception
      */
     @Test
-    void testGetAllCategories(@Autowired MockMvc mvc) throws Exception {
+    void testGetAllCategoriesViolation(@Autowired MockMvc mvc, @Autowired ObjectMapper objectMapper) throws Exception {
         // BEFORE
-        Set<ConstraintViolation<PaginateRequestDTO>> violations = new HashSet<>();
-        ConstraintViolation<PaginateRequestDTO> violation = null;
-        violations.add(violation);
-        PaginateRequestDTO paginateRequest = new PaginateRequestDTO(0,10, null, Sort.Direction.ASC);
-        doReturn(violations).when(validator).validate(paginateRequest);
+        Paginate<CategorieDTO> p = new Paginate<>(List.of(), new Pagination(2, 10, 0));
+
+        Set<ConstraintViolation<PaginateRequestDTO>> mocked = mock(Set.class);
+        doReturn(mocked).when(this.validator).validate(any(PaginateRequestDTO.class));
+        doReturn(false).when(mocked).isEmpty();
 
         // WHERE
         MockHttpServletResponse response = mvc.perform(
@@ -213,7 +214,7 @@ class TestCategoriesController extends TestConfigurationControlleurRest {
         CategorieDTO categorieDTO = new CategorieDTO(1, "libelle", 2);
         // Définie l'admin en admin
         this.defineAdminUser();
-        doReturn(categorieDTO).when(serviceCategorie).updateCategory(1, categorieDTO);
+        doReturn(categorieDTO).when(serviceCategorie).updateCategory(eq(1), any(CategorieDTO.class));
 
         //WHERE
         MockHttpServletResponse response = mvc.perform(
@@ -287,7 +288,7 @@ class TestCategoriesController extends TestConfigurationControlleurRest {
         CategorieDTO categorieDTO = new CategorieDTO(1, "libelle", 2);
         // Définie l'admin en admin
         this.defineAdminUser();
-        doThrow(CategorieNotFoundException.class).when(serviceCategorie).updateCategory(1, categorieDTO);
+        doThrow(CategorieNotFoundException.class).when(serviceCategorie).updateCategory(eq(2), any(CategorieDTO.class));
 
         //WHERE
         MockHttpServletResponse response = mvc.perform(
