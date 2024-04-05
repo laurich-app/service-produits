@@ -43,7 +43,7 @@ public class Produit {
     private String description;
 
     @Getter @Setter
-    @Column(length = 255)
+    @Column(columnDefinition = "TEXT")
     private String image;
 
     @Getter @Setter
