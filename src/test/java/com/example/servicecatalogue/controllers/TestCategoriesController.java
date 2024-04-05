@@ -61,7 +61,7 @@ class TestCategoriesController extends TestConfigurationControlleurRest {
      * @throws Exception
      */
     @Test
-    void testCreerCategoriesNotAdminUnauthorized(@Autowired MockMvc mvc, @Autowired ObjectMapper objectMapper) throws Exception {
+    void testCreerCategoriesNotAdminForbidden(@Autowired MockMvc mvc, @Autowired ObjectMapper objectMapper) throws Exception {
         // BEFORE
         CategorieDTO categorieDTO = new CategorieDTO(1, "libelle", 10);
 

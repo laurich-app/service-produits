@@ -125,7 +125,7 @@ public class ServiceProduit {
     }
 
     @Transactional
-    public String deleteProduit(int id) {
+    public void deleteProduit(int id) {
         Optional<Produit> produit = this.produitRepository.findById(id);
         if (produit.isEmpty()) {
             throw new EntityNotFoundException("Produit non trouvé pour l'ID :" +id);
@@ -134,8 +134,6 @@ public class ServiceProduit {
         produit.get().getStocks().stream().forEach(s ->
             this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(s.getCouleurs().name(), id))
         );
-
-        return "Produit supprimé !";
     }
 
     @Transactional
