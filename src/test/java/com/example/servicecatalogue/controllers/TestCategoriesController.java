@@ -138,11 +138,8 @@ class TestCategoriesController extends TestConfigurationControlleurRest {
     @Test
     void testGetAllCategoriesViolation(@Autowired MockMvc mvc, @Autowired ObjectMapper objectMapper) throws Exception {
         // BEFORE
-        Paginate<CategorieDTO> p = new Paginate<>(List.of(), new Pagination(2, 10, 0));
-
         Set<ConstraintViolation<PaginateRequestDTO>> mocked = mock(Set.class);
         doReturn(mocked).when(this.validator).validate(any(PaginateRequestDTO.class));
-        doReturn(false).when(mocked).isEmpty();
 
         // WHERE
         MockHttpServletResponse response = mvc.perform(

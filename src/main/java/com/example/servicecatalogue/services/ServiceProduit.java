@@ -65,8 +65,8 @@ public class ServiceProduit {
 
         Produit produit = new Produit();
         produit.setPrixUnitaire(produitDTO.prix_unitaire());
-        produit.setSexe(Sexe.valueOf(produitDTO.sexe()));
-        produit.setTaille(Taille.valueOf(produitDTO.taille()));
+        produit.setSexe(produitDTO.sexe());
+        produit.setTaille(produitDTO.taille());
         produit.setLibelle(libelleMajuscules);
         produit.setDescription(produitDTO.description());
         produit.setImage(produitDTO.image_url());

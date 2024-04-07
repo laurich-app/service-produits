@@ -107,8 +107,8 @@ public class ProduitsController {
         if(!violations.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        Paginate<ProduitOutPaginateDTO> utilisateur = this.serviceProduit.getAllProduits(paginateRequest);
-        return ResponseEntity.ok(utilisateur);
+        Paginate<ProduitOutPaginateDTO> allProduitsPaginate = this.serviceProduit.getAllProduits(paginateRequest);
+        return ResponseEntity.ok(allProduitsPaginate);
     }
 
     /*
@@ -132,7 +132,7 @@ public class ProduitsController {
             Stocks s = serviceProduit.addStock(id, stockDTO.couleur());
             return ResponseEntity.status(HttpStatus.CREATED).body(StocksOutDTO.fromStock(s));
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.notFound().build();
         } catch (StockExisteDejaException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
