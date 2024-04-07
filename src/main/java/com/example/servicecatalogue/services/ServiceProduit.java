@@ -8,8 +8,6 @@ import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.dtos.pagination.Pagination;
 import com.example.servicecatalogue.dtos.rabbits.*;
 import com.example.servicecatalogue.enums.Couleurs;
-import com.example.servicecatalogue.enums.Sexe;
-import com.example.servicecatalogue.enums.Taille;
 import com.example.servicecatalogue.exceptions.InvalideCommandeException;
 import com.example.servicecatalogue.exceptions.QuantiteIndisponibleCommandeException;
 import com.example.servicecatalogue.exceptions.StockExisteDejaException;
