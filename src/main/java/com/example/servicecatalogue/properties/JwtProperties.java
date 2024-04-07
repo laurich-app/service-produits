@@ -1,9 +1,8 @@
 package com.example.servicecatalogue.properties;
 
 import com.example.servicecatalogue.dtos.ConsulDTO;
+import com.example.servicecatalogue.exceptions.ConsulKeyException;
 import jakarta.annotation.PostConstruct;
-import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -30,41 +29,51 @@ public class JwtProperties {
     @Value("${CONSUL_PORT:8500}")
     private String consulPort;
 
+    @Value("${spring.cloud.consul.enabled}")
+    private boolean springCloudConsulEnabled;
+
     @PostConstruct
-    public void postConstruct() throws Exception {
-        ConsulDTO[] results = this.webClient.get().uri("http://"+consulHost+":"+consulPort+"/v1/kv/config/application/publicKey").retrieve().bodyToMono(ConsulDTO[].class).block();
-        if(results.length == 0)
-            throw new Exception("Aucune clé trouvé");
+    public void postConstruct() throws ConsulKeyException {
+        if(Boolean.FALSE.equals(springCloudConsulEnabled))
+            return ;
 
-        // Décodage Base64
-        byte[] decodedKeyBytes = Base64.getDecoder().decode(results[0].Value());
+        try {
+            ConsulDTO[] results = this.webClient.get().uri("http://"+consulHost+":"+consulPort+"/v1/kv/config/application/publicKey").retrieve().bodyToMono(ConsulDTO[].class).block();
+            if(results == null || results.length == 0)
+                throw new ConsulKeyException("Aucune clé trouvé");
 
-        // Convertir les bytes en une chaîne de caractères
-        String decodedKeyString = new String(decodedKeyBytes, Charset.defaultCharset());
+            // Décodage Base64
+            byte[] decodedKeyBytes = Base64.getDecoder().decode(results[0].Value());
 
-        String publicKeyPEM = decodedKeyString
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replaceAll(System.lineSeparator(), "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replace("\n", "");
+            // Convertir les bytes en une chaîne de caractères
+            String decodedKeyString = new String(decodedKeyBytes, Charset.defaultCharset());
 
-        // Convertir la chaîne de caractères en un tableau de bytes (byte[])
-        byte[] encoded = Base64.getDecoder().decode(publicKeyPEM);
+            String publicKeyPEM = decodedKeyString
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replaceAll(System.lineSeparator(), "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replace("\n", "");
 
-        //         Créez une spécification de clé X.509 à partir des données décodées
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(encoded);
+            // Convertir la chaîne de caractères en un tableau de bytes (byte[])
+            byte[] encoded = Base64.getDecoder().decode(publicKeyPEM);
 
-        //         Obtenez une instance de la fabrique de clés RSA
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            //         Créez une spécification de clé X.509 à partir des données décodées
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(encoded);
 
-        //         Générez la clé publique à partir de la spécification
-        PublicKey publicKey = keyFactory.generatePublic(spec);
+            //         Obtenez une instance de la fabrique de clés RSA
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-        // Assurez-vous que la clé est une instance de RSAPublicKey
-        if (publicKey instanceof RSAPublicKey) {
-            this.setKey((RSAPublicKey) publicKey);
-        } else {
-            throw new IllegalArgumentException("La clé fournie n'est pas une clé publique RSA valide.");
+            //         Générez la clé publique à partir de la spécification
+            PublicKey publicKey = keyFactory.generatePublic(spec);
+
+            // Assurez-vous que la clé est une instance de RSAPublicKey
+            if (publicKey instanceof RSAPublicKey r) {
+                this.setKey( r);
+            } else {
+                throw new IllegalArgumentException("La clé fournie n'est pas une clé publique RSA valide.");
+            }
+        } catch (Exception e) {
+            throw new ConsulKeyException(e.getMessage());
         }
     }
 

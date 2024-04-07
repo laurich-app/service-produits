@@ -14,7 +14,7 @@ import lombok.Setter;
         public CategorieDTO(int idCategorie, String libelle, int nbProduits) {
             this.id=idCategorie;
             this.libelle=libelle;
-            this.nbProduits=nbProduits;
+            this.nbProduits =nbProduits;
         }
     }
 

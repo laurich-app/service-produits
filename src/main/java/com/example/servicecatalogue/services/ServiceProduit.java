@@ -6,10 +6,14 @@ import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
 import com.example.servicecatalogue.dtos.pagination.Pagination;
+import com.example.servicecatalogue.dtos.rabbits.*;
 import com.example.servicecatalogue.enums.Couleurs;
 import com.example.servicecatalogue.enums.Sexe;
 import com.example.servicecatalogue.enums.Taille;
+import com.example.servicecatalogue.exceptions.InvalideCommandeException;
+import com.example.servicecatalogue.exceptions.QuantiteIndisponibleCommandeException;
 import com.example.servicecatalogue.exceptions.StockExisteDejaException;
+import com.example.servicecatalogue.exceptions.StockNotFoundException;
 import com.example.servicecatalogue.modele.Categorie;
 import com.example.servicecatalogue.modele.Produit;
 import com.example.servicecatalogue.modele.Stocks;
@@ -27,11 +31,9 @@ import com.example.servicecatalogue.repositories.ProduitRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ServiceProduit {
-
     @Autowired
     private final ProduitRepository produitRepository;
     @Autowired
@@ -39,42 +41,45 @@ public class ServiceProduit {
     @Autowired
     private final StocksRepository stockRepository;
 
-    public ServiceProduit(ProduitRepository produitRepository, CategorieRepository categorieRepository, StocksRepository stockRepository) {
+    private final ServiceRabbitMQSender serviceRabbitMQSender;
+
+    public ServiceProduit(ProduitRepository produitRepository, CategorieRepository categorieRepository, StocksRepository stockRepository, @Autowired ServiceRabbitMQSender serviceRabbitMQSender) {
         this.produitRepository = produitRepository;
         this.categorieRepository = categorieRepository;
         this.stockRepository = stockRepository;
+        this.serviceRabbitMQSender = serviceRabbitMQSender;
     }
 
     @Transactional
     public Produit saveProduit(ProduitDTO produitDTO) {
-        if (produitDTO.getPrix_unitaire() <= 0) {
+        if (produitDTO.prix_unitaire() <= 0) {
             throw new IllegalArgumentException("Le prix unitaire doit être positif");
         }
-        Categorie categorie = categorieRepository.findById(produitDTO.getCategorie_id())
+        Categorie categorie = categorieRepository.findById(produitDTO.categorie_id())
                 .orElseThrow(() -> new EntityNotFoundException("La catégorie spécifiée n'existe pas"));
 
-        if (produitDTO.getSexe() == null || produitDTO.getTaille() == null || produitDTO.getLibelle() == null) {
+        if (produitDTO.sexe() == null || produitDTO.taille() == null || produitDTO.libelle() == null) {
             throw new IllegalArgumentException("Les champs 'sexe', 'taille' et 'libelle' ne doivent pas être nuls");
         }
-        String libelleMajuscules = produitDTO.getLibelle().toUpperCase();
+        String libelleMajuscules = produitDTO.libelle().toUpperCase();
 
         Produit produit = new Produit();
-        produit.setPrix_unitaire(produitDTO.getPrix_unitaire());
-        produit.setSexe(Sexe.valueOf(produitDTO.getSexe()));
-        produit.setTaille(Taille.valueOf(produitDTO.getTaille()));
+        produit.setPrixUnitaire(produitDTO.prix_unitaire());
+        produit.setSexe(produitDTO.sexe());
+        produit.setTaille(produitDTO.taille());
         produit.setLibelle(libelleMajuscules);
-        produit.setDescription(produitDTO.getDescription());
-        produit.setImage(produitDTO.getImage_url());
+        produit.setDescription(produitDTO.description());
+        produit.setImage(produitDTO.image_url());
         produit.setCategory(categorie);
 
         produitRepository.save(produit);
 
-        if (produitDTO.getCouleurs() == null || produitDTO.getCouleurs().isEmpty()) {
+        if (produitDTO.couleurs() == null || produitDTO.couleurs().isEmpty()) {
             throw new IllegalArgumentException("La liste des couleurs ne doit pas être nulle ou vide");
         }
 
         List<Stocks> stocks = new ArrayList<>();
-        for (String couleur : produitDTO.getCouleurs()) {
+        for (String couleur : produitDTO.couleurs()) {
             if (couleur == null || Couleurs.valueOf(couleur) == null) {
                 throw new IllegalArgumentException("La couleur '" + couleur + "' n'est pas valide");
             }
@@ -85,6 +90,8 @@ public class ServiceProduit {
             stockRepository.save(stock);
             stocks.add(stock);
         }
+
+        stocks.forEach(s -> this.serviceRabbitMQSender.stockManquant(Produit.toRabbitMqDTO(produit, s.getCouleurs().toString(), 5)));
 
         produit.setStocks(stocks);
         return produit;
@@ -101,15 +108,12 @@ public class ServiceProduit {
         // Convertir les objets BlogDAO en BlogDTO en utilisant la fabrique
         List<ProduitOutPaginateDTO> dtos = paginated.stream()
                 .map(Produit::toDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         // Créer un objet Paginate contenant les blogs paginés
-        Paginate<ProduitOutPaginateDTO> paginate = new Paginate<>(dtos, new Pagination(Math.toIntExact(paginated.getTotalElements()),
+        return new Paginate<>(dtos, new Pagination(Math.toIntExact(paginated.getTotalElements()),
                 paginateRequestDTO.limit(), paginateRequestDTO.page()));
-
-        // Retourner la liste des objets Paginate
-        return paginate;
-    };
+    }
 
     public Produit getProduitById(int id) {
         Optional<Produit> produitOptional = produitRepository.findById(id);
@@ -121,12 +125,15 @@ public class ServiceProduit {
     }
 
     @Transactional
-    public String deleteProduit(int id) {
-        if (!produitRepository.existsById(id)) {
+    public void deleteProduit(int id) {
+        Optional<Produit> produit = this.produitRepository.findById(id);
+        if (produit.isEmpty()) {
             throw new EntityNotFoundException("Produit non trouvé pour l'ID :" +id);
         }
         produitRepository.deleteById(id);
-        return "Produit supprimé !";
+        produit.get().getStocks().stream().forEach(s ->
+            this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(s.getCouleurs().name(), id))
+        );
     }
 
     @Transactional
@@ -138,7 +145,7 @@ public class ServiceProduit {
         Produit produit = opProduit.get();
 
         if(produitDTO.prix_unitaire() >= 0f)
-            produit.setPrix_unitaire(produitDTO.prix_unitaire());
+            produit.setPrixUnitaire(produitDTO.prix_unitaire());
 
         if(produitDTO.sexe() != null)
             produit.setSexe(produitDTO.sexe());
@@ -181,15 +188,69 @@ public class ServiceProduit {
         s.setQuantite(0);
         s.setProduit(produit);
         s.setCouleurs(couleur);
-        return stockRepository.save(s);
+        s = stockRepository.save(s);
+        this.serviceRabbitMQSender.stockManquant(Produit.toRabbitMqDTO(produit, s.getCouleurs().toString(), 5));
+        return s;
     }
 
+    @Transactional
     public void deleteStock(int id, Couleurs couleur) {
         Stocks stock = stockRepository.findByProduitIdAndCouleurs(id, couleur);
         if(stock == null) {
             throw new EntityNotFoundException("Le stock existe déjà");
         }
-
         stockRepository.delete(stock);
+        this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(couleur.name(), stock.getProduit().getId()));
+    }
+
+    /**
+     * A la réception d'une commande valider, envoie le détail des produits au service catalogue pour traitement.
+     * Met à jours le stock en conséquence.
+     * @param validerCommandeDTO
+     */
+    @Transactional
+    public void genereCommande(ValiderCommandeDTO validerCommandeDTO) throws InvalideCommandeException, QuantiteIndisponibleCommandeException {
+        List<ProduitCatalogueDTO> produits = new ArrayList<>();
+        // Liste des produits qui ont un stock inférieur ou égale à 5 : besoin d'être réapprovisionner
+        List<ProduitCatalogueDTO> produitsStockManquant = new ArrayList<>();
+        for (ProduitCommandeDTO p : validerCommandeDTO.produits()) {
+            Optional<Produit> opt = this.produitRepository.findById(p.id_produit());
+            if (opt.isEmpty())
+                throw new InvalideCommandeException("Le produit " + p.id_produit() + "n'existe plus dans la base." + validerCommandeDTO);
+
+            Produit produit = opt.get();
+            Stocks stock = null;
+            for (Stocks s : produit.getStocks()) {
+                if (s.getCouleurs().equals(Couleurs.valueOf(p.couleur())))
+                    stock = s;
+            }
+            if(stock == null)
+                throw new QuantiteIndisponibleCommandeException("La couleur n'est plus disponible : "+p.couleur());
+
+            if(stock.getQuantite() < p.quantite())
+                throw new QuantiteIndisponibleCommandeException("La quantité est indisponible : "+p.couleur() + "; "+p.id_produit());
+
+            // Mise à jour du stock
+            stock.setQuantite(stock.getQuantite() - p.quantite());
+            produits.add(Produit.toRabbitMqDTO(produit, p.couleur(), p.quantite()));
+            if(stock.getQuantite() <= 5)
+                produitsStockManquant.add(Produit.toRabbitMqDTO(produit, p.couleur(), p.quantite()));
+        }
+        this.serviceRabbitMQSender.genererCommande(
+                new GenererCommandeDTO(
+                        produits,
+                        validerCommandeDTO.id_commande()
+                )
+        );
+        produitsStockManquant.stream().forEach(this.serviceRabbitMQSender::stockManquant);
+    }
+
+    @Transactional
+    public void stockReappro(ProduitCommandeDTO produitCommandeDTO) throws StockNotFoundException {
+        Stocks stock = this.stockRepository.findByProduitIdAndCouleurs(produitCommandeDTO.id_produit(), Couleurs.valueOf(produitCommandeDTO.couleur()));
+        if(stock == null)
+            throw new StockNotFoundException("Le stock n'existe pas.");
+        stock.setQuantite(produitCommandeDTO.quantite());
+        this.stockRepository.save(stock);
     }
 }

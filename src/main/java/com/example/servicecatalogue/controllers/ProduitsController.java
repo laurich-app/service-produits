@@ -22,7 +22,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.example.servicecatalogue.services.ServiceProduit;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Set;
 
 @RestController
@@ -43,9 +45,13 @@ public class ProduitsController {
     public ResponseEntity<ProduitOutDTO> saveProduit(@RequestBody ProduitDTO produitDTO) {
         try {
             Produit savedProduit = serviceProduit.saveProduit(produitDTO);
-            return new ResponseEntity<>(ProduitOutDTO.fromProduit(savedProduit), HttpStatus.CREATED);
+            URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                    .buildAndExpand(savedProduit.getId()).toUri();
+            return ResponseEntity.created(location).body(ProduitOutDTO.fromProduit(savedProduit));
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -56,9 +62,9 @@ public class ProduitsController {
     public ResponseEntity<ProduitOutDTO> getProduitById(@PathVariable int id){
         try{
             Produit produit = serviceProduit.getProduitById(id);
-            return new ResponseEntity<>(ProduitOutDTO.fromProduit(produit), HttpStatus.OK);
+            return ResponseEntity.ok(ProduitOutDTO.fromProduit(produit));
         }catch (EntityNotFoundException e){
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -69,10 +75,10 @@ public class ProduitsController {
     @PreAuthorize("hasRole('GESTIONNAIRE')")
     public ResponseEntity<String> deleteProduit(@PathVariable int id) {
         try {
-            String res= serviceProduit.deleteProduit(id);
-            return new ResponseEntity<>(res,HttpStatus.NO_CONTENT);
+            serviceProduit.deleteProduit(id);
+            return ResponseEntity.noContent().build();
         } catch (EntityNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -85,7 +91,7 @@ public class ProduitsController {
         try {
             return ResponseEntity.ok(ProduitOutDTO.fromProduit(serviceProduit.updateProduit(id,produitDTO)));
         } catch (EntityNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -101,8 +107,8 @@ public class ProduitsController {
         if(!violations.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        Paginate<ProduitOutPaginateDTO> utilisateur = this.serviceProduit.getAllProduits(paginateRequest);
-        return ResponseEntity.ok(utilisateur);
+        Paginate<ProduitOutPaginateDTO> allProduitsPaginate = this.serviceProduit.getAllProduits(paginateRequest);
+        return ResponseEntity.ok(allProduitsPaginate);
     }
 
     /*
@@ -113,9 +119,9 @@ public class ProduitsController {
     public ResponseEntity<String> deleteStock(@PathVariable int id, @PathVariable Couleurs couleur) {
         try {
             serviceProduit.deleteStock(id, couleur);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return ResponseEntity.noContent().build();
         } catch (EntityNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -124,11 +130,11 @@ public class ProduitsController {
     public ResponseEntity<StocksOutDTO> addStock(@PathVariable int id, @RequestBody StockDTO stockDTO) {
         try {
             Stocks s = serviceProduit.addStock(id, stockDTO.couleur());
-            return new ResponseEntity<>(StocksOutDTO.fromStock(s), HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(StocksOutDTO.fromStock(s));
         } catch (EntityNotFoundException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return ResponseEntity.notFound().build();
         } catch (StockExisteDejaException e) {
-            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 }

@@ -7,6 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 public class PageableUtils {
+    private PageableUtils () {
+        // NOP
+    }
+
     public static Pageable convert(PaginateRequestDTO paginateRequest) {
         // Récupérer les blogs paginés à partir du repository
         Pageable pageable;

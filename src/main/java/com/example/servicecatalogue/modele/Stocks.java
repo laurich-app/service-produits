@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Entity
 @Table(name = "STOCKS")
 @NoArgsConstructor
@@ -18,7 +16,8 @@ public class Stocks {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
-    private int id_stock;
+    @Column(name = "id_stock")
+    private int idStock;
 
     @Getter @Setter
     @ManyToOne

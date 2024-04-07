@@ -1,7 +1,7 @@
 package com.example.servicecatalogue.modele;
 
 
-import com.example.servicecatalogue.dtos.out.CategorieOutPaginateDTO;
+import com.example.servicecatalogue.dtos.CategorieDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +20,8 @@ public class Categorie {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id_categorie;
+    @Column(name = "id_categorie")
+    private int idCategorie;
 
     @Setter
     private String libelle;
@@ -32,17 +33,17 @@ public class Categorie {
     @Override
     public String toString() {
         return "Categorie{" +
-                "id_categorie=" + id_categorie +
+                "id_categorie=" + idCategorie +
                 ", libelle='" + libelle + '\'' +
                 ", produit=" + produit +
                 '}';
     }
 
-    public static CategorieOutPaginateDTO toDTO(Categorie categorie) {
-        return new CategorieOutPaginateDTO(
-                categorie.getId_categorie(),
+    public static CategorieDTO toDTO(Categorie categorie, int nbProduits) {
+        return new CategorieDTO(
+                categorie.getIdCategorie(),
                 categorie.getLibelle(),
-                categorie.getProduit()
+                nbProduits
         );
     }
 }

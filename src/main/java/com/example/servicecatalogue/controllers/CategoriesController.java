@@ -1,11 +1,10 @@
 package com.example.servicecatalogue.controllers;
 
 import com.example.servicecatalogue.dtos.CategorieDTO;
-import com.example.servicecatalogue.dtos.out.CategorieOutPaginateDTO;
 import com.example.servicecatalogue.dtos.pagination.Paginate;
 import com.example.servicecatalogue.dtos.pagination.PaginateRequestDTO;
+import com.example.servicecatalogue.exceptions.CategorieNotFoundException;
 import com.example.servicecatalogue.services.ServiceCategorie;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +44,7 @@ public class CategoriesController {
         Pour récuperer la liste des categories paginées
      */
     @GetMapping()
-    public ResponseEntity<Paginate<CategorieOutPaginateDTO>> getAllCategories(
+    public ResponseEntity<Paginate<CategorieDTO>> getAllCategories(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
             @RequestParam(name = "limit", defaultValue = "10", required = false) int limit,
             @RequestParam(name = "sort", required = false) String sort,
@@ -56,7 +55,7 @@ public class CategoriesController {
         if(!violations.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        Paginate<CategorieOutPaginateDTO> utilisateur = this.serviceCategorie.getAllCategories(paginateRequest);
+        Paginate<CategorieDTO> utilisateur = this.serviceCategorie.getAllCategories(paginateRequest);
         return ResponseEntity.ok(utilisateur);
     }
 
@@ -68,7 +67,7 @@ public class CategoriesController {
         try {
             CategorieDTO categorieDTO = serviceCategorie.getCategoryById(id);
             return new ResponseEntity<>(categorieDTO, HttpStatus.OK);
-        } catch (EntityNotFoundException e) {
+        } catch (CategorieNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
@@ -82,7 +81,7 @@ public class CategoriesController {
         try {
             CategorieDTO updatedCategoryDTO = serviceCategorie.updateCategory(id, categorieDTO);
             return new ResponseEntity<>(updatedCategoryDTO, HttpStatus.OK);
-        } catch (EntityNotFoundException e) {
+        } catch (CategorieNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
@@ -96,7 +95,7 @@ public class CategoriesController {
         try {
             serviceCategorie.deleteCategory(id);
             return new ResponseEntity<>("Category with id " + id + " deleted successfully", HttpStatus.NO_CONTENT);
-        } catch (EntityNotFoundException e) {
+        } catch (CategorieNotFoundException e) {
             return new ResponseEntity<>("Category not found with id: " + id, HttpStatus.NOT_FOUND);
         }
     }
