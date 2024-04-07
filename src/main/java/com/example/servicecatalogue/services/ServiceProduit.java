@@ -22,8 +22,6 @@ import com.example.servicecatalogue.repositories.StocksRepository;
 import com.example.servicecatalogue.utils.PageableUtils;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,12 +31,9 @@ import com.example.servicecatalogue.repositories.ProduitRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ServiceProduit {
-    private static final Logger logger = LoggerFactory.getLogger(ServiceProduit.class);
-
     @Autowired
     private final ProduitRepository produitRepository;
     @Autowired
@@ -57,34 +52,34 @@ public class ServiceProduit {
 
     @Transactional
     public Produit saveProduit(ProduitDTO produitDTO) {
-        if (produitDTO.getPrix_unitaire() <= 0) {
+        if (produitDTO.prix_unitaire() <= 0) {
             throw new IllegalArgumentException("Le prix unitaire doit être positif");
         }
-        Categorie categorie = categorieRepository.findById(produitDTO.getCategorie_id())
+        Categorie categorie = categorieRepository.findById(produitDTO.categorie_id())
                 .orElseThrow(() -> new EntityNotFoundException("La catégorie spécifiée n'existe pas"));
 
-        if (produitDTO.getSexe() == null || produitDTO.getTaille() == null || produitDTO.getLibelle() == null) {
+        if (produitDTO.sexe() == null || produitDTO.taille() == null || produitDTO.libelle() == null) {
             throw new IllegalArgumentException("Les champs 'sexe', 'taille' et 'libelle' ne doivent pas être nuls");
         }
-        String libelleMajuscules = produitDTO.getLibelle().toUpperCase();
+        String libelleMajuscules = produitDTO.libelle().toUpperCase();
 
         Produit produit = new Produit();
-        produit.setPrix_unitaire(produitDTO.getPrix_unitaire());
-        produit.setSexe(Sexe.valueOf(produitDTO.getSexe()));
-        produit.setTaille(Taille.valueOf(produitDTO.getTaille()));
+        produit.setPrixUnitaire(produitDTO.prix_unitaire());
+        produit.setSexe(produitDTO.sexe());
+        produit.setTaille(produitDTO.taille());
         produit.setLibelle(libelleMajuscules);
-        produit.setDescription(produitDTO.getDescription());
-        produit.setImage(produitDTO.getImage_url());
+        produit.setDescription(produitDTO.description());
+        produit.setImage(produitDTO.image_url());
         produit.setCategory(categorie);
 
         produitRepository.save(produit);
 
-        if (produitDTO.getCouleurs() == null || produitDTO.getCouleurs().isEmpty()) {
+        if (produitDTO.couleurs() == null || produitDTO.couleurs().isEmpty()) {
             throw new IllegalArgumentException("La liste des couleurs ne doit pas être nulle ou vide");
         }
 
         List<Stocks> stocks = new ArrayList<>();
-        for (String couleur : produitDTO.getCouleurs()) {
+        for (String couleur : produitDTO.couleurs()) {
             if (couleur == null || Couleurs.valueOf(couleur) == null) {
                 throw new IllegalArgumentException("La couleur '" + couleur + "' n'est pas valide");
             }
@@ -113,15 +108,12 @@ public class ServiceProduit {
         // Convertir les objets BlogDAO en BlogDTO en utilisant la fabrique
         List<ProduitOutPaginateDTO> dtos = paginated.stream()
                 .map(Produit::toDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         // Créer un objet Paginate contenant les blogs paginés
-        Paginate<ProduitOutPaginateDTO> paginate = new Paginate<>(dtos, new Pagination(Math.toIntExact(paginated.getTotalElements()),
+        return new Paginate<>(dtos, new Pagination(Math.toIntExact(paginated.getTotalElements()),
                 paginateRequestDTO.limit(), paginateRequestDTO.page()));
-
-        // Retourner la liste des objets Paginate
-        return paginate;
-    };
+    }
 
     public Produit getProduitById(int id) {
         Optional<Produit> produitOptional = produitRepository.findById(id);
@@ -133,17 +125,15 @@ public class ServiceProduit {
     }
 
     @Transactional
-    public String deleteProduit(int id) {
+    public void deleteProduit(int id) {
         Optional<Produit> produit = this.produitRepository.findById(id);
         if (produit.isEmpty()) {
             throw new EntityNotFoundException("Produit non trouvé pour l'ID :" +id);
         }
         produitRepository.deleteById(id);
-        produit.get().getStocks().stream().forEach(s -> {
-            this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(s.getCouleurs().name(), id));
-        });
-
-        return "Produit supprimé !";
+        produit.get().getStocks().stream().forEach(s ->
+            this.serviceRabbitMQSender.supprimerStock(new SupprimerStockDTO(s.getCouleurs().name(), id))
+        );
     }
 
     @Transactional
@@ -155,7 +145,7 @@ public class ServiceProduit {
         Produit produit = opProduit.get();
 
         if(produitDTO.prix_unitaire() >= 0f)
-            produit.setPrix_unitaire(produitDTO.prix_unitaire());
+            produit.setPrixUnitaire(produitDTO.prix_unitaire());
 
         if(produitDTO.sexe() != null)
             produit.setSexe(produitDTO.sexe());
@@ -252,7 +242,7 @@ public class ServiceProduit {
                         validerCommandeDTO.id_commande()
                 )
         );
-        produitsStockManquant.stream().forEach(p -> this.serviceRabbitMQSender.stockManquant(p));
+        produitsStockManquant.stream().forEach(this.serviceRabbitMQSender::stockManquant);
     }
 
     @Transactional

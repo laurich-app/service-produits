@@ -5,7 +5,6 @@ import com.example.servicecatalogue.dtos.out.ProduitOutPaginateDTO;
 import com.example.servicecatalogue.dtos.out.StocksOutDTO;
 import com.example.servicecatalogue.dtos.rabbits.CategorieCatalogueDTO;
 import com.example.servicecatalogue.dtos.rabbits.ProduitCatalogueDTO;
-import com.example.servicecatalogue.enums.Couleurs;
 import com.example.servicecatalogue.enums.Sexe;
 import com.example.servicecatalogue.enums.Taille;
 import jakarta.persistence.*;
@@ -29,7 +28,7 @@ public class Produit {
     private int id;
 
     @Getter @Setter
-    private double prix_unitaire;
+    private double prixUnitaire;
 
     @Getter @Setter
     private Sexe sexe;
@@ -45,7 +44,7 @@ public class Produit {
     private String description;
 
     @Getter @Setter
-    @Column(length = 255)
+    @Column(columnDefinition = "TEXT")
     private String image;
 
     @Getter @Setter
@@ -62,7 +61,7 @@ public class Produit {
                 produit.getLibelle(),
                 produit.getDescription(),
                 produit.getImage(),
-                produit.getPrix_unitaire(),
+                produit.getPrixUnitaire(),
                 produit.getSexe(),
                 produit.getTaille(),
                 produit.getStocks().stream().map(StocksOutDTO::fromStock).collect(Collectors.toList())
@@ -79,7 +78,7 @@ public class Produit {
     public static ProduitCatalogueDTO toRabbitMqDTO(Produit produit, String couleur, int quantite) {
         return new ProduitCatalogueDTO(
                 produit.getId(),
-                produit.getPrix_unitaire(),
+                produit.getPrixUnitaire(),
                 produit.getSexe().toString(),
                 produit.getTaille().toString(),
                 produit.getImage(),

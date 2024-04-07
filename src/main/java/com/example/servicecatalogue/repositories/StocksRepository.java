@@ -10,6 +10,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StocksRepository extends JpaRepository<Stocks, Integer> {
 
-    @Query("SELECT s FROM Stocks s WHERE s.couleurs = :couleur AND s.produit.id = :id_produit")
-    Stocks findByProduitIdAndCouleurs(int id_produit, Couleurs couleur);
+    @Query("SELECT s FROM Stocks s WHERE s.couleurs = :couleur AND s.produit.id = :idProduit")
+    Stocks findByProduitIdAndCouleurs(int idProduit, Couleurs couleur);
 }

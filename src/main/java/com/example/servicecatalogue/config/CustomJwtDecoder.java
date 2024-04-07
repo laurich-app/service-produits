@@ -12,11 +12,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 @Configuration
 public class CustomJwtDecoder {
 
-    @Autowired
-    private final JwtProperties jwtProperties;
-
     @Bean
-    JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(this.jwtProperties.getKey()).build();
+    JwtDecoder jwtDecoder(@Autowired JwtProperties jwtProperties) {
+        return NimbusJwtDecoder.withPublicKey(jwtProperties.getKey()).build();
     }
 }

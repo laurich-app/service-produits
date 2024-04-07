@@ -25,13 +25,10 @@ public class ServiceRabbitMQReceiver implements RabbitListenerConfigurer {
 
     @RabbitListener(queues = "${spring.rabbitmq.queue.commande.valider.commande}")
     public void consumeValiderCommande(ValiderCommandeDTO validerCommandeDTO) {
-        logger.info("Commande validé : " + validerCommandeDTO);
+        logger.info("Commande validé : {}", validerCommandeDTO);
         try {
             serviceProduit.genereCommande(validerCommandeDTO);
-        } catch (InvalideCommandeException e) {
-            logger.error(e.getMessage());
-            logger.error(validerCommandeDTO.toString());
-        } catch (QuantiteIndisponibleCommandeException e) {
+        } catch (InvalideCommandeException | QuantiteIndisponibleCommandeException e) {
             logger.error(e.getMessage());
             logger.error(validerCommandeDTO.toString());
         }
@@ -39,7 +36,7 @@ public class ServiceRabbitMQReceiver implements RabbitListenerConfigurer {
 
     @RabbitListener(queues = "${spring.rabbitmq.queue.reapprovisionnement.stock.reappro}")
     public void consumeStockReappro(ProduitCommandeDTO produitCommandeDTO) {
-        logger.info("Stock réapprovisionné : " + produitCommandeDTO);
+        logger.info("Stock réapprovisionné : {}", produitCommandeDTO);
         try {
             serviceProduit.stockReappro(produitCommandeDTO);
         } catch (StockNotFoundException e) {
@@ -50,6 +47,6 @@ public class ServiceRabbitMQReceiver implements RabbitListenerConfigurer {
 
     @Override
     public void configureRabbitListeners(RabbitListenerEndpointRegistrar rabbitListenerEndpointRegistrar) {
-
+        // Nop
     }
 }

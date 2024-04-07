@@ -9,12 +9,12 @@ import lombok.Setter;
 
         private int id;
         private String libelle;
-        private int nb_produits;
+        private int nbProduits;
 
         public CategorieDTO(int idCategorie, String libelle, int nbProduits) {
             this.id=idCategorie;
             this.libelle=libelle;
-            this.nb_produits=nbProduits;
+            this.nbProduits =nbProduits;
         }
     }
 

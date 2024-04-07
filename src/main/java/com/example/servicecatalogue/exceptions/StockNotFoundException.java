@@ -1,6 +1,6 @@
 package com.example.servicecatalogue.exceptions;
 
-public class StockNotFoundException extends Throwable {
+public class StockNotFoundException extends Exception {
     public StockNotFoundException() {
     }
 

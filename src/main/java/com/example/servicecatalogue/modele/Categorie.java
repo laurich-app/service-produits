@@ -20,7 +20,8 @@ public class Categorie {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id_categorie;
+    @Column(name = "id_categorie")
+    private int idCategorie;
 
     @Setter
     private String libelle;
@@ -32,17 +33,17 @@ public class Categorie {
     @Override
     public String toString() {
         return "Categorie{" +
-                "id_categorie=" + id_categorie +
+                "id_categorie=" + idCategorie +
                 ", libelle='" + libelle + '\'' +
                 ", produit=" + produit +
                 '}';
     }
 
-    public static CategorieDTO toDTO(Categorie categorie, int nb_produits) {
+    public static CategorieDTO toDTO(Categorie categorie, int nbProduits) {
         return new CategorieDTO(
-                categorie.getId_categorie(),
+                categorie.getIdCategorie(),
                 categorie.getLibelle(),
-                nb_produits
+                nbProduits
         );
     }
 }

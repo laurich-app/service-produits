@@ -4,11 +4,12 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
+import java.util.Objects;
 
 public class CustomAuthenticationToken extends AbstractAuthenticationToken {
 
-    private final Object principal;
-    private Object credentials;
+    private final transient Object principal;
+    private final transient Object credentials;
 
     public CustomAuthenticationToken(Object principal, Object credentials,
                                      Collection<? extends GrantedAuthority> authorities) {
@@ -26,6 +27,20 @@ public class CustomAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public Object getPrincipal() {
         return principal;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        CustomAuthenticationToken that = (CustomAuthenticationToken) o;
+        return Objects.equals(principal, that.principal) && Objects.equals(credentials, that.credentials);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), principal, credentials);
     }
 }
 
