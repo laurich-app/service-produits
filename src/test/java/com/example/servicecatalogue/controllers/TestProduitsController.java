@@ -40,7 +40,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
-public class TestProduitsController extends TestConfigurationControlleurRest {
+class TestProduitsController extends TestConfigurationControlleurRest {
 
     @MockBean
     ServiceProduit serviceProduit;

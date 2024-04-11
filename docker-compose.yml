@@ -9,6 +9,8 @@ services:
     image: ghcr.io/laurich-app/serveur-conf:0.0.3
     ports:
       - 8888:8888
+    environment:
+      - CONSUL_HOST=discovery
 
   adminer:
     image: adminer
