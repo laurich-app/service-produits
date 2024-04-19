@@ -248,7 +248,7 @@ public class ServiceProduit {
         Stocks stock = this.stockRepository.findByProduitIdAndCouleurs(produitCommandeDTO.id_produit(), Couleurs.valueOf(produitCommandeDTO.couleur()));
         if(stock == null)
             throw new StockNotFoundException("Le stock n'existe pas.");
-        stock.setQuantite(produitCommandeDTO.quantite());
+        stock.setQuantite(stock.getQuantite() + produitCommandeDTO.quantite());
         this.stockRepository.save(stock);
     }
 }
